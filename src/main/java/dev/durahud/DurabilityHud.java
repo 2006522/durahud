@@ -44,6 +44,16 @@ public final class DurabilityHud {
     /** 一件可显示装备都没有时，编辑界面里占位框的宽度（保证还有东西可拖）。 */
     static final int PLACEHOLDER_W = 96;
 
+    /**
+     * 位置校正时至少要留在屏幕里的像素。
+     *
+     * <p>原来校正用的是「整块 HUD 都得塞进屏幕」，而 HUD 的宽高随装备件数和文字长度变化：
+     * 多穿一件装备、耐久数字多一位，右/下边界就变小，位置被推走几像素还被写进配置 ——
+     * 玩家看到的就是「我没动它，它自己挪了」。改成只保证左上角在屏幕内、
+     * 右下角还留这一小块能抓到，位置就稳定了。</p>
+     */
+    static final int MIN_VISIBLE = 24;
+
     private DurabilityHud() {
     }
 
@@ -104,6 +114,20 @@ public final class DurabilityHud {
         return PAD * 2 + Math.max(1, es.size()) * ROW_H;
     }
 
+    /**
+     * 把 HUD 左上角收进屏幕，只要求「右下角还留 {@link #MIN_VISIBLE} 像素」。
+     *
+     * <p>刻意<b>不</b>按整块大小算边界：宽高会随装备件数/文字位数变化，
+     * 那样每次装备变化都会悄悄把位置推走几像素并落盘。</p>
+     *
+     * @return {@code {x, y}}
+     */
+    static int[] clampAnchor(int x, int y, int screenW, int screenH) {
+        int maxX = Math.max(0, screenW - MIN_VISIBLE);
+        int maxY = Math.max(0, screenH - MIN_VISIBLE);
+        return new int[]{Math.max(0, Math.min(maxX, x)), Math.max(0, Math.min(maxY, y))};
+    }
+
     // ---------------------------------------------------------------- 绘制
 
     /** HUD 元素入口：每帧由 Fabric 调。 */
@@ -129,14 +153,11 @@ public final class DurabilityHud {
             return;
         }
         // 存的是绝对 GUI 坐标，窗口大小 / 界面缩放变了以后可能跑到屏幕外面去。
-        // 这里先收进当前可视范围，并把收回后的值写回配置 —— 否则玩家会看到
-        // "位置没保存"，其实是保存了但显示在屏幕外。
-        int w = hudWidth(mc, es);
-        int h = hudHeight(es);
-        int maxX = Math.max(0, g.guiWidth() - w);
-        int maxY = Math.max(0, g.guiHeight() - h);
-        int x = Math.max(0, Math.min(maxX, cfg.getX()));
-        int y = Math.max(0, Math.min(maxY, cfg.getY()));
+        // 这里只把左上角收进屏幕（留一小块能看见），并把收回后的值写回配置 ——
+        // 边界不能按整块大小算，否则装备件数一变就会把位置悄悄推走。
+        int[] pos = clampAnchor(cfg.getX(), cfg.getY(), g.guiWidth(), g.guiHeight());
+        int x = pos[0];
+        int y = pos[1];
         if (x != cfg.getX() || y != cfg.getY()) {
             cfg.setX(x);
             cfg.setY(y);

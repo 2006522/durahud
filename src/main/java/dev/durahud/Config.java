@@ -47,12 +47,21 @@ public final class Config {
     /**
      * 背包里那个 HUD 按钮相对面板左上角的偏移。
      *
-     * <p>存的是**相对量**而不是绝对坐标：这样换 GUI 缩放、换分辨率，按钮都还贴在面板
-     * 左边同一个位置，不会跑到屏幕外面去。默认 {@code -30} 就是面板左边外侧
-     * （按钮宽 26 + 间距 4）。</p>
+     * <p><b>只用于老配置迁移和"恢复默认位置"</b>：按钮真正的位置现在是绝对 GUI 坐标
+     * （{@link #buttonX}/{@link #buttonY}）。原来存相对偏移的时候，背包面板在
+     * 生存背包（176 宽、含配方书还会左移）、创造物品栏（195 宽）里原点都不一样，
+     * 同一个偏移量在两种界面算出来的屏幕位置差十几像素 —— 玩家看到的就是
+     * "我明明拖好了，怎么又跑别的地方去了"。</p>
      */
     private int buttonDx = -30;
     private int buttonDy = 4;
+
+    /** 按钮左上角在 GUI 坐标系里的绝对位置；{@link #UNSET} 表示还没落位。 */
+    private int buttonX = UNSET;
+    private int buttonY = UNSET;
+
+    /** 还没算过绝对位置的哨兵值。 */
+    public static final int UNSET = Integer.MIN_VALUE;
 
     private Config() {
     }
@@ -103,7 +112,7 @@ public final class Config {
         return background;
     }
 
-    /** 背包里 HUD 按钮相对面板左上角的横向偏移。 */
+    /** 背包里 HUD 按钮相对面板左上角的横向偏移（仅用于落位和恢复默认）。 */
     public int getButtonDx() {
         return buttonDx;
     }
@@ -112,7 +121,7 @@ public final class Config {
         this.buttonDx = buttonDx;
     }
 
-    /** 背包里 HUD 按钮相对面板左上角的纵向偏移。 */
+    /** 背包里 HUD 按钮相对面板左上角的纵向偏移（仅用于落位和恢复默认）。 */
     public int getButtonDy() {
         return buttonDy;
     }
@@ -121,12 +130,51 @@ public final class Config {
         this.buttonDy = buttonDy;
     }
 
+    /** 按钮是否已经有绝对坐标（false 表示还要按面板偏移落一次位）。 */
+    public boolean hasButtonPos() {
+        return buttonX != UNSET && buttonY != UNSET;
+    }
+
+    public int getButtonX() {
+        return buttonX;
+    }
+
+    public void setButtonX(int buttonX) {
+        this.buttonX = buttonX;
+    }
+
+    public int getButtonY() {
+        return buttonY;
+    }
+
+    public void setButtonY(int buttonY) {
+        this.buttonY = buttonY;
+    }
+
+    /**
+     * 第一次用（或刚恢复默认位置）时，按「面板左上角 + 偏移」算一次绝对坐标并落盘。
+     *
+     * <p>之后再打开任何界面都不再重算，按钮就钉在同一个屏幕位置上。</p>
+     */
+    public void ensureButtonPos(int panelLeft, int panelTop) {
+        if (hasButtonPos()) {
+            return;
+        }
+        buttonX = panelLeft + buttonDx;
+        buttonY = panelTop + buttonDy;
+        save();
+        Log.info("HUD 按钮位置落位为绝对坐标 " + buttonX + "," + buttonY);
+    }
+
     /** HUD 与按钮一起恢复默认位置（HUD 回左上角，按钮回面板左侧）。 */
     public void resetPositions() {
         this.x = 6;
         this.y = 6;
         this.buttonDx = -30;
         this.buttonDy = 4;
+        // 清成"未落位"，下次打开背包时按上面的偏移重新摆到面板左边
+        this.buttonX = UNSET;
+        this.buttonY = UNSET;
         save();
     }
 
@@ -152,6 +200,8 @@ public final class Config {
         background = readBool(p, "background", background);
         buttonDx = readInt(p, "button_dx", buttonDx);
         buttonDy = readInt(p, "button_dy", buttonDy);
+        buttonX = readInt(p, "button_x", buttonX);
+        buttonY = readInt(p, "button_y", buttonY);
 
         String mode = p.getProperty("text", "").trim().toUpperCase();
         if (!mode.isEmpty()) {
@@ -162,7 +212,9 @@ public final class Config {
             }
         }
         Log.info("已读取配置 " + FILE.getAbsolutePath()
-                + " → HUD(" + x + "," + y + ") 按钮偏移(" + buttonDx + "," + buttonDy + ") 文本=" + text);
+                + " → HUD(" + x + "," + y + ")"
+                + " 按钮绝对(" + (hasButtonPos() ? buttonX + "," + buttonY : "未落位")
+                + ") 按钮偏移(" + buttonDx + "," + buttonDy + ") 文本=" + text);
     }
 
     public void save() {
@@ -176,6 +228,8 @@ public final class Config {
         p.setProperty("background", Boolean.toString(background));
         p.setProperty("button_dx", Integer.toString(buttonDx));
         p.setProperty("button_dy", Integer.toString(buttonDy));
+        p.setProperty("button_x", Integer.toString(buttonX));
+        p.setProperty("button_y", Integer.toString(buttonY));
 
         File dir = FILE.getParentFile();
         if (dir != null && !dir.isDirectory() && !dir.mkdirs()) {

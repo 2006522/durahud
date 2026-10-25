@@ -96,9 +96,8 @@ public abstract class InventoryHudButtonMixin {
                 || Math.abs(event.y() - this.durahud$startY) > DURAHUD_DRAG_THRESHOLD) {
             this.durahud$moved = true;
         }
-        button.setX((int) Math.round(event.x() - this.durahud$grabX));
-        button.setY((int) Math.round(event.y() - this.durahud$grabY));
-        InventoryHudButton.clamp(button, (Screen) (Object) this);
+        InventoryHudButton.moveTo(button, (Screen) (Object) this, event.x(), event.y(),
+                this.durahud$grabX, this.durahud$grabY);
         cir.setReturnValue(Boolean.TRUE);
     }
 
@@ -111,8 +110,11 @@ public abstract class InventoryHudButtonMixin {
         Button button = this.durahud$button;
         if (button != null) {
             if (this.durahud$moved) {
-                // 拖动结束：记住新位置，不打开设置
-                InventoryHudButton.persist(button, this.leftPos, this.topPos);
+                // 拖动结束：按松手坐标最后摆一次（松手点和最后一次拖动点可能差几像素），
+                // 保证「掉在哪就存哪」，再落盘
+                InventoryHudButton.moveTo(button, (Screen) (Object) this, event.x(), event.y(),
+                        this.durahud$grabX, this.durahud$grabY);
+                InventoryHudButton.persist(button);
             } else {
                 // 没动过：当成点击
                 InventoryHudButton.openSettings((Screen) (Object) this);

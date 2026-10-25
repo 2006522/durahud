@@ -77,15 +77,16 @@ public final class HudEditorScreen extends Screen {
      * 把存下来的位置收进当前界面。
      *
      * <p>位置是按 GUI 坐标存的，换窗口大小 / 界面缩放后可能落在屏幕外 ——
-     * 那样进编辑界面会看不到、也抓不到。所以每次画之前先收一次。</p>
+     * 那样进编辑界面会看不到、也抓不到。这里只保证左上角在屏幕内、右下角留
+     * {@link DurabilityHud#MIN_VISIBLE} 像素可抓；<b>不</b>按整块大小算边界，
+     * 否则装备件数一变（HUD 变宽变高）就会把位置推走并写盘，看起来像"自己挪了"。</p>
      */
     private void clampToScreen() {
-        int[] r = rect();
-        int nx = Math.max(0, Math.min(Config.get().getX(), Math.max(0, this.width - r[2])));
-        int ny = Math.max(0, Math.min(Config.get().getY(), Math.max(0, this.height - r[3])));
-        if (nx != Config.get().getX() || ny != Config.get().getY()) {
-            Config.get().setX(nx);
-            Config.get().setY(ny);
+        int[] pos = DurabilityHud.clampAnchor(Config.get().getX(), Config.get().getY(),
+                this.width, this.height);
+        if (pos[0] != Config.get().getX() || pos[1] != Config.get().getY()) {
+            Config.get().setX(pos[0]);
+            Config.get().setY(pos[1]);
             Config.get().save();
         }
     }
