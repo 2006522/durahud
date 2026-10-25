@@ -1,4 +1,5 @@
 {
   "key.durahud.edit": "编辑耐久显示位置",
-  "key.category.durahud.main": "耐久显示"
+  "key.category.durahud.main": "耐久显示",
+  "durahud.button.tip": "设置耐久 HUD 位置"
 }

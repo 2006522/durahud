@@ -30,8 +30,16 @@ public final class HudEditorScreen extends Screen {
     private int grabDx;
     private int grabDy;
 
+    /** 从哪个界面进来的；关掉时回到它（null 表示直接从游戏里按 F10 打开，回游戏）。 */
+    private final Screen parent;
+
     public HudEditorScreen() {
+        this(null);
+    }
+
+    public HudEditorScreen(Screen parent) {
         super(Component.literal("耐久显示 HUD 位置"));
+        this.parent = parent;
     }
 
     // ---------------------------------------------------------------- 绘制
@@ -115,7 +123,8 @@ public final class HudEditorScreen extends Screen {
             case InputConstants.KEY_ESCAPE -> {
                 Config.get().save();
                 if (this.minecraft != null) {
-                    this.minecraft.setScreenAndShow(null);
+                    // 从背包进来的就还回背包，按 F10 进来的就回游戏
+                    this.minecraft.setScreenAndShow(this.parent);
                 }
                 yield true;
             }

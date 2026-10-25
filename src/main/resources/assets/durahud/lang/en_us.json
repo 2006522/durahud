@@ -1,4 +1,5 @@
 {
   "key.durahud.edit": "Edit durability HUD position",
-  "key.category.durahud.main": "Durability HUD"
+  "key.category.durahud.main": "Durability HUD",
+  "durahud.button.tip": "Set durability HUD position"
 }
