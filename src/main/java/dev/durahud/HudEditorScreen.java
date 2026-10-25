@@ -24,8 +24,6 @@ public final class HudEditorScreen extends Screen {
     private static final int HINT_BG = 0xA0000000;
     private static final int HINT_COLOR = 0xFFEAEAEA;
     private static final int HINT_SUB = 0xFF9FC4FF;
-    /** 没有任何可显示装备时占位框的宽度，保证还有东西可拖。 */
-    private static final int PLACEHOLDER_W = 96;
 
     private boolean dragging;
     /** 按下时鼠标相对 HUD 左上角的偏移，拖动时保持这个偏移，手感才跟手。 */
@@ -61,7 +59,7 @@ public final class HudEditorScreen extends Screen {
     private int[] rect() {
         Minecraft mc = Minecraft.getInstance();
         List<DurabilityHud.Entry> es = DurabilityHud.entries(mc);
-        int w = es.isEmpty() ? PLACEHOLDER_W : DurabilityHud.hudWidth(mc, es);
+        int w = es.isEmpty() ? DurabilityHud.PLACEHOLDER_W : DurabilityHud.hudWidth(mc, es);
         int h = DurabilityHud.hudHeight(es);
         return new int[]{Config.get().getX(), Config.get().getY(), w, h};
     }

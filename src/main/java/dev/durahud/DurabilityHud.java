@@ -41,6 +41,9 @@ public final class DurabilityHud {
     static final int COL_HINT = 0xFFEAEAEA;
     static final int COL_EMPTY = 0xFFAAAAAA;
 
+    /** 一件可显示装备都没有时，编辑界面里占位框的宽度（保证还有东西可拖）。 */
+    static final int PLACEHOLDER_W = 96;
+
     private DurabilityHud() {
     }
 
@@ -127,7 +130,13 @@ public final class DurabilityHud {
     static void render(GuiGraphicsExtractor g, int x, int y, boolean editing) {
         Minecraft mc = Minecraft.getInstance();
         List<Entry> es = entries(mc);
-        int w = hudWidth(mc, es);
+
+        // 平时没东西可显示就整块都不画；只有编辑界面里才画个占位框，否则没东西可拖
+        if (es.isEmpty() && !editing) {
+            return;
+        }
+
+        int w = es.isEmpty() ? PLACEHOLDER_W : hudWidth(mc, es);
         int h = hudHeight(es);
 
         if (Config.get().isBackground()) {
