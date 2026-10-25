@@ -41,8 +41,8 @@ public final class InventoryHudButton {
         Button button = Button.builder(Component.literal("HUD"), b -> {
                     Minecraft mc = Minecraft.getInstance();
                     if (mc != null) {
-                        // 把背包当成"父界面"传过去，编辑完按 ESC 会回到背包而不是直接退回游戏
-                        mc.setScreenAndShow(new HudEditorScreen(screen));
+                        // 把背包当成"父界面"传过去，关掉设置后回到背包而不是直接退回游戏
+                        mc.setScreenAndShow(new HudSettingsScreen(screen));
                     }
                 })
                 .bounds(x, y, WIDTH, HEIGHT)

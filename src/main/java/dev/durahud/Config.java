@@ -85,6 +85,10 @@ public final class Config {
         return text;
     }
 
+    public void setText(TextMode text) {
+        this.text = text;
+    }
+
     public boolean isBackground() {
         return background;
     }

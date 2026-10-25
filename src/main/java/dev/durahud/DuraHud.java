@@ -39,14 +39,15 @@ public final class DuraHud implements ClientModInitializer {
             while (editKey.consumeClick()) {
                 try {
                     if (client.gui != null && client.gui.screen() == null) {
-                        client.setScreenAndShow(new HudEditorScreen());
+                        // 直接对着游戏按的，没有父界面：关掉就回游戏
+                        client.setScreenAndShow(new HudSettingsScreen(null));
                     }
                 } catch (Exception e) {
-                    Log.error("打开 HUD 编辑界面失败", e);
+                    Log.error("打开耐久 HUD 设置失败", e);
                 }
             }
         });
 
-        Log.info("已加载：装备和手持工具的耐久显示在屏幕上，按 F10 可以拖动位置。");
+        Log.info("已加载：装备和手持工具的耐久显示在屏幕上，按 F10 或背包里的 HUD 按钮可设置。");
     }
 }
