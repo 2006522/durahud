@@ -9,54 +9,72 @@ import net.minecraft.network.chat.Component;
 import java.lang.reflect.Method;
 
 /**
- * 在背包界面左侧加一个「HUD」按钮，点一下开位置编辑界面。
+ * 背包界面左侧那个「HUD」按钮：轻点开设置，按住拖动可以换位置。
+ *
+ * <p>位置存的是**相对面板左上角的偏移**（{@code button_dx}/{@code button_dy}），
+ * 不是绝对屏幕坐标 —— 换 GUI 缩放或分辨率后按钮还贴在面板左边，不会跑丢。</p>
  *
  * <p>逻辑放在这里而不是 mixin 里，是因为 mixin 包（{@code dev.durahud.mixin}）
- * 访问不到 {@code Screen} 的 {@code protected} 成员，也不该去碰包内可见的 {@link Log}。
- * mixin 只负责"在 init 末尾报一下面板坐标"，剩下的都在这儿。</p>
+ * 访问不到 {@code Screen} 的 {@code protected} 成员，也不该碰包内可见的 {@link Log}。
+ * mixin 只负责把鼠标事件转过来。</p>
  */
 public final class InventoryHudButton {
 
     private static final int WIDTH = 26;
     private static final int HEIGHT = 20;
-    /** 按钮与面板之间留的缝。 */
-    private static final int GAP = 4;
 
     private InventoryHudButton() {
     }
 
     /**
-     * @param screen    当前的容器界面
-     * @param panelLeft 面板左上角的屏幕坐标（{@code leftPos}）
-     * @param panelTop  面板顶边的屏幕坐标（{@code topPos}）
+     * 在容器界面里加按钮。
+     *
+     * @return 加好的按钮；反射失败时返回 {@code null}（按钮不出现，但绝不崩游戏）
      */
-    public static void addTo(Screen screen, int panelLeft, int panelTop) {
-        // 放面板左侧外面，不压任何原版格子；界面太窄就贴住左边距
-        int x = panelLeft - WIDTH - GAP;
-        if (x < 2) {
-            x = 2;
-        }
-        int y = panelTop + GAP;
+    public static Button addTo(Screen screen, int panelLeft, int panelTop) {
+        Config cfg = Config.get();
+        int x = panelLeft + cfg.getButtonDx();
+        int y = panelTop + cfg.getButtonDy();
 
-        Button button = Button.builder(Component.literal("HUD"), b -> {
-                    Minecraft mc = Minecraft.getInstance();
-                    if (mc != null) {
-                        // 把背包当成"父界面"传过去，关掉设置后回到背包而不是直接退回游戏
-                        mc.setScreenAndShow(new HudSettingsScreen(screen));
-                    }
-                })
+        Button button = Button.builder(Component.literal("HUD"), b -> openSettings(screen))
                 .bounds(x, y, WIDTH, HEIGHT)
                 .tooltip(Component.translatable("durahud.button.tip"))
                 .build();
+        clamp(button, screen);
 
         try {
-            // addRenderableWidget 是 protected，mixin 里没法直接调，反射拿一次最省事；
-            // 拿不到就静默跳过——按钮不出现总比崩游戏好
+            // addRenderableWidget 是 protected，mixin 里没法直接调，反射拿一次最省事
             Method m = Screen.class.getDeclaredMethod("addRenderableWidget", GuiEventListener.class);
             m.setAccessible(true);
             m.invoke(screen, button);
+            return button;
         } catch (Exception e) {
             Log.warn("背包按钮添加失败: " + e.getMessage());
+            return null;
         }
+    }
+
+    /** 打开设置界面，把当前界面当成父界面（关掉时回到它）。 */
+    public static void openSettings(Screen from) {
+        Minecraft mc = Minecraft.getInstance();
+        if (mc != null) {
+            mc.setScreenAndShow(new HudSettingsScreen(from));
+        }
+    }
+
+    /** 别让按钮被拖出屏幕，否则就找不回来了。 */
+    public static void clamp(Button button, Screen screen) {
+        int maxX = Math.max(0, screen.width - WIDTH);
+        int maxY = Math.max(0, screen.height - HEIGHT);
+        button.setX(Math.max(0, Math.min(maxX, button.getX())));
+        button.setY(Math.max(0, Math.min(maxY, button.getY())));
+    }
+
+    /** 拖完把「相对面板的偏移」写回配置。 */
+    public static void persist(Button button, int panelLeft, int panelTop) {
+        Config cfg = Config.get();
+        cfg.setButtonDx(button.getX() - panelLeft);
+        cfg.setButtonDy(button.getY() - panelTop);
+        cfg.save();
     }
 }

@@ -44,6 +44,16 @@ public final class Config {
     /** 是否画半透明底板，关掉就只剩图标和条。 */
     private boolean background = true;
 
+    /**
+     * 背包里那个 HUD 按钮相对面板左上角的偏移。
+     *
+     * <p>存的是**相对量**而不是绝对坐标：这样换 GUI 缩放、换分辨率，按钮都还贴在面板
+     * 左边同一个位置，不会跑到屏幕外面去。默认 {@code -30} 就是面板左边外侧
+     * （按钮宽 26 + 间距 4）。</p>
+     */
+    private int buttonDx = -30;
+    private int buttonDy = 4;
+
     private Config() {
     }
 
@@ -93,6 +103,24 @@ public final class Config {
         return background;
     }
 
+    /** 背包里 HUD 按钮相对面板左上角的横向偏移。 */
+    public int getButtonDx() {
+        return buttonDx;
+    }
+
+    public void setButtonDx(int buttonDx) {
+        this.buttonDx = buttonDx;
+    }
+
+    /** 背包里 HUD 按钮相对面板左上角的纵向偏移。 */
+    public int getButtonDy() {
+        return buttonDy;
+    }
+
+    public void setButtonDy(int buttonDy) {
+        this.buttonDy = buttonDy;
+    }
+
     // ---------------------------------------------------------------- 读写
 
     public void load() {
@@ -112,6 +140,8 @@ public final class Config {
         showArmor = readBool(p, "show_armor", showArmor);
         showHeld = readBool(p, "show_held", showHeld);
         background = readBool(p, "background", background);
+        buttonDx = readInt(p, "button_dx", buttonDx);
+        buttonDy = readInt(p, "button_dy", buttonDy);
 
         String mode = p.getProperty("text", "").trim().toUpperCase();
         if (!mode.isEmpty()) {
@@ -132,6 +162,8 @@ public final class Config {
         p.setProperty("show_held", Boolean.toString(showHeld));
         p.setProperty("text", text.name().toLowerCase());
         p.setProperty("background", Boolean.toString(background));
+        p.setProperty("button_dx", Integer.toString(buttonDx));
+        p.setProperty("button_dy", Integer.toString(buttonDy));
 
         File dir = FILE.getParentFile();
         if (dir != null && !dir.isDirectory() && !dir.mkdirs()) {

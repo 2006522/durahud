@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "id": "durahud",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "name": "耐久显示(DuraHUD)",
   "description": "耐久显示 (DuraHUD)：把四件盔甲和主副手物品的耐久以原版图标加文字显示在屏幕上，可自由拖动位置。纯客户端实现，单人存档和联机都能用。Minecraft 26.4-snapshot-5 / Fabric。",
   "authors": [
