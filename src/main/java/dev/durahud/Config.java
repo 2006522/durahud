@@ -121,11 +121,21 @@ public final class Config {
         this.buttonDy = buttonDy;
     }
 
+    /** HUD 与按钮一起恢复默认位置（HUD 回左上角，按钮回面板左侧）。 */
+    public void resetPositions() {
+        this.x = 6;
+        this.y = 6;
+        this.buttonDx = -30;
+        this.buttonDy = 4;
+        save();
+    }
+
     // ---------------------------------------------------------------- 读写
 
     public void load() {
         Properties p = new Properties();
         if (!FILE.isFile()) {
+            Log.info("没有配置文件，先用默认值: " + FILE.getAbsolutePath());
             return;
         }
         try (FileInputStream in = new FileInputStream(FILE)) {
@@ -151,6 +161,8 @@ public final class Config {
                 // 写错了就用默认值，不因为一个配置项崩掉
             }
         }
+        Log.info("已读取配置 " + FILE.getAbsolutePath()
+                + " → HUD(" + x + "," + y + ") 按钮偏移(" + buttonDx + "," + buttonDy + ") 文本=" + text);
     }
 
     public void save() {

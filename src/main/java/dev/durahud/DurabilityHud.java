@@ -124,12 +124,34 @@ public final class DurabilityHud {
         if (mc.gui != null && mc.gui.screen() instanceof HudEditorScreen) {
             return;
         }
-        render(g, cfg.getX(), cfg.getY(), false);
+        List<Entry> es = entries(mc);
+        if (es.isEmpty()) {
+            return;
+        }
+        // 存的是绝对 GUI 坐标，窗口大小 / 界面缩放变了以后可能跑到屏幕外面去。
+        // 这里先收进当前可视范围，并把收回后的值写回配置 —— 否则玩家会看到
+        // "位置没保存"，其实是保存了但显示在屏幕外。
+        int w = hudWidth(mc, es);
+        int h = hudHeight(es);
+        int maxX = Math.max(0, g.guiWidth() - w);
+        int maxY = Math.max(0, g.guiHeight() - h);
+        int x = Math.max(0, Math.min(maxX, cfg.getX()));
+        int y = Math.max(0, Math.min(maxY, cfg.getY()));
+        if (x != cfg.getX() || y != cfg.getY()) {
+            cfg.setX(x);
+            cfg.setY(y);
+            cfg.save();
+            Log.info("HUD 位置超出当前界面，已收回到 " + x + "," + y);
+        }
+        renderWith(g, es, x, y, false);
     }
 
     static void render(GuiGraphicsExtractor g, int x, int y, boolean editing) {
+        renderWith(g, entries(Minecraft.getInstance()), x, y, editing);
+    }
+
+    private static void renderWith(GuiGraphicsExtractor g, List<Entry> es, int x, int y, boolean editing) {
         Minecraft mc = Minecraft.getInstance();
-        List<Entry> es = entries(mc);
 
         // 平时没东西可显示就整块都不画；只有编辑界面里才画个占位框，否则没东西可拖
         if (es.isEmpty() && !editing) {

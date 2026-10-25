@@ -15,7 +15,7 @@ import net.minecraft.network.chat.Component;
 public final class HudSettingsScreen extends Screen {
 
     private static final int PANEL_W = 224;
-    private static final int PANEL_H = 136;
+    private static final int PANEL_H = 154;
     private static final int COL_PANEL = 0xD0000000;
     private static final int COL_BORDER = 0x60FFFFFF;
     private static final int COL_TITLE = 0xFFFFFFFF;
@@ -62,10 +62,20 @@ public final class HudSettingsScreen extends Screen {
                 .bounds(left + 8, top + 76, PANEL_W - 16, 20)
                 .build());
 
-        addRenderableWidget(Button.builder(Component.literal("完成"), b -> close())
-                .bounds(left + 8, top + 106, PANEL_W - 16, 20)
+        addRenderableWidget(Button.builder(Component.literal("恢复默认位置"), b -> resetPositions())
+                .bounds(left + 8, top + 100, PANEL_W - 16, 20)
                 .build());
 
+        addRenderableWidget(Button.builder(Component.literal("完成"), b -> close())
+                .bounds(left + 8, top + 124, PANEL_W - 16, 20)
+                .build());
+
+        refreshButtons();
+    }
+
+    /** HUD 和背包按钮一起回默认位置（两边都拖乱了的时候一键复原）。 */
+    private void resetPositions() {
+        Config.get().resetPositions();
         refreshButtons();
     }
 

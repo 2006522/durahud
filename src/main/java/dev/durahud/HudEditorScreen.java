@@ -47,6 +47,7 @@ public final class HudEditorScreen extends Screen {
     @Override
     public void extractRenderState(GuiGraphicsExtractor g) {
         // 刻意不调用 super：不要那层把世界压暗的底，方便对着真实画面调位置
+        clampToScreen();
         Config cfg = Config.get();
         DurabilityHud.render(g, cfg.getX(), cfg.getY(), true);
 
@@ -70,6 +71,23 @@ public final class HudEditorScreen extends Screen {
         int w = es.isEmpty() ? DurabilityHud.PLACEHOLDER_W : DurabilityHud.hudWidth(mc, es);
         int h = DurabilityHud.hudHeight(es);
         return new int[]{Config.get().getX(), Config.get().getY(), w, h};
+    }
+
+    /**
+     * 把存下来的位置收进当前界面。
+     *
+     * <p>位置是按 GUI 坐标存的，换窗口大小 / 界面缩放后可能落在屏幕外 ——
+     * 那样进编辑界面会看不到、也抓不到。所以每次画之前先收一次。</p>
+     */
+    private void clampToScreen() {
+        int[] r = rect();
+        int nx = Math.max(0, Math.min(Config.get().getX(), Math.max(0, this.width - r[2])));
+        int ny = Math.max(0, Math.min(Config.get().getY(), Math.max(0, this.height - r[3])));
+        if (nx != Config.get().getX() || ny != Config.get().getY()) {
+            Config.get().setX(nx);
+            Config.get().setY(ny);
+            Config.get().save();
+        }
     }
 
     // ---------------------------------------------------------------- 交互

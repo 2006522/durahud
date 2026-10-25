@@ -33,14 +33,22 @@ public final class InventoryHudButton {
      */
     public static Button addTo(Screen screen, int panelLeft, int panelTop) {
         Config cfg = Config.get();
-        int x = panelLeft + cfg.getButtonDx();
-        int y = panelTop + cfg.getButtonDy();
+        int wantX = panelLeft + cfg.getButtonDx();
+        int wantY = panelTop + cfg.getButtonDy();
 
         Button button = Button.builder(Component.literal("HUD"), b -> openSettings(screen))
-                .bounds(x, y, WIDTH, HEIGHT)
+                .bounds(wantX, wantY, WIDTH, HEIGHT)
                 .tooltip(Component.translatable("durahud.button.tip"))
                 .build();
         clamp(button, screen);
+
+        // 位置存的是相对面板的偏移，一般不会被收；真被屏幕边缘收掉了就把结果写回去，
+        // 免得每次进来都在"存的位置"和"实际显示位置"之间来回跳
+        if (button.getX() != wantX || button.getY() != wantY) {
+            cfg.setButtonDx(button.getX() - panelLeft);
+            cfg.setButtonDy(button.getY() - panelTop);
+            cfg.save();
+        }
 
         try {
             // addRenderableWidget 是 protected，mixin 里没法直接调，反射拿一次最省事
